@@ -1,4 +1,4 @@
-package com.tom.api.energy;
+package com.tom.lib.api.energy;
 
 import java.util.List;
 

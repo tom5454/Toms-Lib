@@ -1,6 +1,6 @@
-package com.tom.api.energy;
+package com.tom.lib.api.energy;
 
-import static com.tom.api.energy.EnergyStorage.*;
+import static com.tom.lib.api.energy.EnergyStorage.*;
 
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.Item;

@@ -1,9 +1,11 @@
 package com.tom.lib.network.patches;
 
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.network.Packet;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.util.math.Vec2f;
@@ -16,10 +18,17 @@ public class EntityPlayerMapped extends EntityPlayerMP {
 	private NetworkManagerPatchedServer manager;
 	private Supplier<Vec3d> off;
 	private Supplier<Vec2f> roff;
+	public Predicate<Packet<?>> filter;
 	public EntityPlayerMapped(MinecraftServer server, WorldServer worldIn, EntityPlayerMP player, long id, Supplier<Vec3d> off, Supplier<Vec2f> roff) {
 		super(server, worldIn, player.getGameProfile(), new PlayerInteractionManager(worldIn));
 		manager = new NetworkManagerPatchedServer(player, id);
-		connection = new NetHandlerPlayServer(server, manager, this);
+		connection = new NetHandlerPlayServer(server, manager, this){
+			@Override
+			public void sendPacket(Packet<?> packetIn) {
+				if(filter == null || filter.test(packetIn))
+					super.sendPacket(packetIn);
+			}
+		};
 		this.player = player;
 		this.mapid = id;
 		this.off = off;

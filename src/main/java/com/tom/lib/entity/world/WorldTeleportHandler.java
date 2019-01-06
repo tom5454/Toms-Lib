@@ -55,7 +55,16 @@ public class WorldTeleportHandler {
 		dim.world.getPlayers(EntityPlayerMapped.class, v -> (v.getName().equals(player.getName()) && v.mapid == id)).forEach(EntityPlayerMapped::remove);
 		LibNetworkHandler.sendTo(new MessagePacket(new PacketSwap(id + 1, true, new Vec3d(entity.posX, entity.posY, entity.posZ), entity.getUniqueID(), entity.getSize()), 0), (EntityPlayerMP) player);
 		ignoreDimChangedEvent = true;
+		/*NetHandlerPlayServer old = entityPlayerMP.connection;
+		new NetHandlerPlayServer(entityPlayerMP.mcServer, old.netManager, entityPlayerMP){
+			@Override
+			public void sendPacket(net.minecraft.network.Packet<?> packetIn) {
+				if(!(packetIn instanceof SPacketChunkData))super.sendPacket(packetIn);
+			}
+		};*/
 		tpx(entityPlayerMP, LibConfig.dimID, x, y, z);
+		/*old.netManager.setNetHandler(old);
+		entityPlayerMP.connection = old;*/
 		ignoreDimChangedEvent = false;
 		WorldServer oldWorld = (WorldServer) player.getEntityWorld();
 		MinecraftServer server = oldWorld.getMinecraftServer();
@@ -70,7 +79,9 @@ public class WorldTeleportHandler {
 			float pitch = entity.rotationPitch + player.rotationPitch;
 			return new Vec2f(yaw, pitch);
 		});
+		//pl.filter = p -> !(p instanceof SPacketChunkData);
 		oldWorld.getPlayerChunkMap().addPlayer(pl);
+		//pl.filter = null;
 		oldWorld.spawnEntity(pl);
 	}
 	public static void teleportPlayerOut(EntityPlayer player, Dim dim){

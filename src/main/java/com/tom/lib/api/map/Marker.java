@@ -1,4 +1,4 @@
-package com.tom.api.map;
+package com.tom.lib.api.map;
 
 import net.minecraft.nbt.NBTTagCompound;
 

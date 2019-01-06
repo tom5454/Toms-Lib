@@ -7,6 +7,8 @@ public interface IPlayerHandler {
 	public void load(NBTTagCompound tag);
 	public void save(NBTTagCompound tag);
 	public String getID();
+	public void updateOffPre();
+	public void updateOffPost();
 	public void updatePre(EntityPlayerMP player);
 	public void updatePost(EntityPlayerMP player);
 

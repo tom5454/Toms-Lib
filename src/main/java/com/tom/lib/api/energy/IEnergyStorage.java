@@ -1,9 +1,16 @@
-package com.tom.api.energy;
+package com.tom.lib.api.energy;
 
-import java.util.List;
+/**
+ * An energy storage is the unit of interaction with Energy inventories.<br>
+ * This is not to be implemented on TileEntities. This is for internal use only.
+ * <p>
+ * A reference implementation can be found at {@link EnergyStorage}.
+ *
+ * @author tom5454
+ *
+ */
+public interface IEnergyStorage {
 
-/**Used for capabilities.*/
-public interface IEnergyStorageHandlerCapability {
 	/**
 	 * Adds energy to the storage. Returns quantity of energy that was accepted.
 	 *
@@ -14,7 +21,7 @@ public interface IEnergyStorageHandlerCapability {
 	 * @return Amount of energy that was (or would have been, if simulated)
 	 *         accepted by the storage.
 	 */
-	double receiveEnergy(EnergyType type, double maxReceive, boolean simulate);
+	double receiveEnergy(double maxReceive, boolean simulate);
 
 	/**
 	 * Removes energy from the storage. Returns quantity of energy that was
@@ -27,23 +34,28 @@ public interface IEnergyStorageHandlerCapability {
 	 * @return Amount of energy that was (or would have been, if simulated)
 	 *         extracted from the storage.
 	 */
-	double extractEnergy(EnergyType type, double maxExtract, boolean simulate);
+	double extractEnergy(double maxExtract, boolean simulate);
 
 	/**
-	 * Returns the amount of energy currently stored in that type.
+	 * Returns the amount of energy currently stored.
 	 */
-	double getEnergyStored(EnergyType type);
+	double getEnergyStored();
 
 	/**
-	 * Returns the maximum amount of energy that can be stored in that type.
+	 * Returns the maximum amount of energy that can be stored.
 	 */
-	long getMaxEnergyStored(EnergyType type);
+	long getMaxEnergyStored();
 
-	/**
-	 *
-	 * @return the valid energy types that can be stored.
-	 */
-	List<EnergyType> getValidEnergyTypes();
+	boolean isFull();
 
-	boolean canConnectEnergy(EnergyType type);
+	boolean hasEnergy();
+
+	double getMaxExtract();
+
+	double getMaxReceive();
+
+	default boolean isDummy() {
+		return false;
+	}
+
 }

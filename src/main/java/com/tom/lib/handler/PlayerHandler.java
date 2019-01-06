@@ -135,10 +135,16 @@ public class PlayerHandler {
 	public static void update(Phase phase) {
 		switch (phase) {
 		case END:
+			FMLCommonHandler.instance().getMinecraftServerInstance().profiler.startSection("[Tom's Mod] Post Update Player Handler");
 			online.forEach(p -> p.update1());
+			handlerMap.values().forEach(p -> p.updateO1());
+			FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
 			break;
 		case START:
+			FMLCommonHandler.instance().getMinecraftServerInstance().profiler.startSection("[Tom's Mod] Update Player Handler");
 			online.forEach(p -> p.update0());
+			handlerMap.values().forEach(p -> p.updateO0());
+			FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
 			break;
 		default:
 			break;
@@ -146,17 +152,20 @@ public class PlayerHandler {
 	}
 
 	private void update0() {
-		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.startSection("[Tom's Mod] Update Player Handler");
 		EntityPlayerMP player = getPlayer();
 		handlers.values().forEach(h -> h.updatePre(player));
-		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
 	}
 
 	private void update1() {
-		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.startSection("[Tom's Mod] Post Update Player Handler");
 		EntityPlayerMP player = getPlayer();
 		handlers.values().forEach(h -> h.updatePost(player));
-		FMLCommonHandler.instance().getMinecraftServerInstance().profiler.endSection();
+	}
+	private void updateO0() {
+		handlers.values().forEach(h -> h.updateOffPre());
+	}
+
+	private void updateO1() {
+		handlers.values().forEach(h -> h.updateOffPost());
 	}
 
 	public EntityPlayerMP getPlayer() {

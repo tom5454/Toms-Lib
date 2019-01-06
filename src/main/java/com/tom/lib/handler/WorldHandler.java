@@ -16,15 +16,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome.SpawnListEntry;
 import net.minecraft.world.chunk.Chunk;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkEvent;
+import net.minecraftforge.event.world.ChunkWatchEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.event.world.WorldEvent.PotentialSpawns;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -34,6 +37,9 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.WorldTickEvent;
 import com.google.common.collect.Queues;
 
 import com.tom.lib.LibConfig;
+import com.tom.lib.api.tileentity.ICustomPacket;
+import com.tom.lib.network.LibNetworkHandler;
+import com.tom.lib.network.messages.MessageTileBuf;
 import com.tom.lib.utils.Ticker;
 import com.tom.lib.utils.TomsUtils;
 
@@ -50,6 +56,7 @@ public class WorldHandler {
 	public World worldObj;
 	private List<Chunk> loadedChunks = new ArrayList<>();
 	public Set<Ticker> tickers = new HashSet<>();
+	public Set<ChunkPos> dirty = new HashSet<>();
 
 	public static void init(){
 		MinecraftForge.EVENT_BUS.register(new EventHandler());
@@ -195,6 +202,8 @@ public class WorldHandler {
 			stack.addAll(stack2);
 			world.profiler.endStartSection("[Tom's Lib] Tick Tickers");
 			Iterator<Ticker> each = tickers.iterator();
+			Set<Ticker> oldTickers = tickers;
+			tickers = new HashSet<>();
 			while (each.hasNext()) {
 				Ticker t = each.next();
 				if (t.isTickerValid())
@@ -202,22 +211,35 @@ public class WorldHandler {
 				else
 					each.remove();
 			}
+			oldTickers.addAll(tickers);
+			tickers = oldTickers;
 			world.profiler.endStartSection("[Tom's Lib] Updating sub handlers");
 			handlers.values().forEach(h -> h.updatePre(world));
 			world.profiler.endSection();
 			break;
 		case END:
 			handlers.values().forEach(h -> h.updatePost(world));
+			if(!dirty.isEmpty()){
+				dirty.forEach(c -> {
+					List<EntityPlayerMP> l = EventHandler.watch.get(c);
+					if(l != null && !l.isEmpty())l.forEach(p -> sendTo(c, p));
+				});
+				dirty.clear();
+			}
 			break;
 		default:
 			break;
 		}
 	}
+	private void sendTo(ChunkPos c, EntityPlayerMP p) {
+		Chunk chunk = worldObj.getChunkFromChunkCoords(c.x, c.z);
+		chunk.getTileEntityMap().values().stream().filter(t -> t instanceof ICustomPacket).map(t -> new MessageTileBuf(((ICustomPacket)t))).forEach(m -> LibNetworkHandler.sendTo(m, p));
+	}
 	public static void addTask(Runnable r, String type) {
 		if (serverStarted) {
 			r.run();
 		} else {
-			log.info("Task " + type + " has queued up.");
+			if(type != null)log.info("Task " + type + " has queued up.");
 			scheduledTasks.add(r);
 		}
 	}
@@ -246,7 +268,18 @@ public class WorldHandler {
 	public static void registerHandler(String id, Function<World, IWorldHandler> factory){
 		subHandlers.put(id, factory);
 	}
+	public void markDirty(ChunkPos chunk) {
+		dirty.add(chunk);
+	}
+
+	public static void markDirty(World world, ChunkPos chunk) {
+		getWorldHandlerForDim(world.provider.getDimension()).markDirty(chunk);
+	}
+	public static void markDirty(World world, BlockPos pos) {
+		markDirty(world, new ChunkPos(pos));
+	}
 	private static class EventHandler {
+		private static Map<ChunkPos, List<EntityPlayerMP>> watch = new HashMap<>();
 		@SubscribeEvent
 		public void chunkLoad(ChunkEvent.Load event) {
 			loadChunkS(event.getChunk());
@@ -281,6 +314,21 @@ public class WorldHandler {
 		@SubscribeEvent
 		public void tick(WorldTickEvent event) {
 			onTick(event.world, event.phase);
+		}
+		@SubscribeEvent
+		public void watch(ChunkWatchEvent.Watch evt){
+			TomsUtils.getOrPut(watch, evt.getChunkInstance().getPos(), ArrayList::new).add(evt.getPlayer());
+			markDirty(evt.getPlayer().world, evt.getChunkInstance().getPos());
+		}
+		@SubscribeEvent
+		public void unwatch(ChunkWatchEvent.UnWatch evt){
+			List<EntityPlayerMP> l = watch.get(evt.getChunkInstance().getPos());
+			if(l != null){
+				l.remove(evt.getPlayer());
+				if(l.isEmpty()){
+					watch.remove(evt.getChunkInstance().getPos());
+				}
+			}
 		}
 	}
 }

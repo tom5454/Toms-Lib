@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.util.ResourceLocation;
 
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -18,15 +19,18 @@ import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppedEvent;
 import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 
-import com.tom.api.energy.EnergyType;
+import com.tom.lib.api.CapabilityGridDeviceHost;
 import com.tom.lib.api.CapabilityPeripheral;
+import com.tom.lib.api.energy.EnergyType;
 import com.tom.lib.dim.DimensionHandler;
 import com.tom.lib.entity.world.EntityWorldShip;
 import com.tom.lib.entity.world.WorldTeleportHandler;
 import com.tom.lib.handler.FileManager;
+import com.tom.lib.handler.LibEventHandler;
 import com.tom.lib.handler.PlayerHandler;
 import com.tom.lib.handler.WorldHandler;
 import com.tom.lib.network.LibNetworkHandler;
@@ -42,7 +46,7 @@ public class LibInit {
 	public static boolean isCCLoaded = false, isOCLoaded = false;
 	public static final String modid = "tomslib";
 	public static final String modName = "Tom's Lib";
-	public static final String version = "1.0";
+	public static final String version = "1.1.0";
 	public static final Logger log = LogManager.getLogger(modName);
 	private static final String CLIENT_PROXY_CLASS = "com.tom.lib.proxy.ClientProxy";
 	private static final String SERVER_PROXY_CLASS = "com.tom.lib.proxy.ServerProxy";
@@ -64,6 +68,7 @@ public class LibInit {
 		proxy.preinit();
 		TomsUtils.printFakePlayerInfo();
 		DataSerializers.registerSerializer(TomsUtils.LONG_SERIALIZER);
+		MinecraftForge.EVENT_BUS.register(new LibEventHandler());
 		long time = System.currentTimeMillis() - tM;
 		log.info("Pre Initialization took in " + time + " milliseconds");
 	}
@@ -74,6 +79,7 @@ public class LibInit {
 		long tM = System.currentTimeMillis();
 		forceMultipier = ReflectionUtils.getValueOrDef("com.tom.config.Config", "forceMultipier", null, 2d);
 		CapabilityPeripheral.init();
+		CapabilityGridDeviceHost.init();
 		EnergyType.init();
 		if(isModuleLoaded(ENTITYWORLD))
 			EntityRegistry.registerModEntity(new ResourceLocation(modid, "world"), EntityWorldShip.class, "worldEntity", LibConfig.worldEntityID, modInstance, 256, 2, true);
@@ -102,8 +108,12 @@ public class LibInit {
 	public static void onServerStop(FMLServerStoppingEvent event) {
 		log.info("Stopping the Server");
 		if(isModuleLoaded(DIMENSION))DimensionHandler.close();
-		if(isModuleLoaded(DATA_STORAGE))FileManager.clean();
 		if(isModuleLoaded(PLAYER_HANDLER))PlayerHandler.cleanup();
 		if(isModuleLoaded(WORLD_HANDLER))WorldHandler.stopServer();
+	}
+	@EventHandler
+	public static void onServerStoped(FMLServerStoppedEvent event) {
+		log.info("Stopped the Server");
+		if(isModuleLoaded(DATA_STORAGE))FileManager.clean();
 	}
 }

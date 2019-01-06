@@ -15,7 +15,9 @@ import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 
 import com.tom.lib.LibInit;
+import com.tom.lib.network.messages.MessageGuiSync;
 import com.tom.lib.network.messages.MessagePacket;
+import com.tom.lib.network.messages.MessageScroll;
 import com.tom.lib.network.messages.MessageTileBuf;
 import com.tom.lib.utils.ReflectionUtils;
 import com.tom.lib.utils.TomsUtils.PacketNoSpamChat;
@@ -33,6 +35,9 @@ public class LibNetworkHandler {
 		register(MessagePacket.class, MessagePacket.class, Side.CLIENT, 998);
 		register(MessagePacket.class, MessagePacket.class, Side.SERVER, 997);
 		register(MessageTileBuf.class, MessageTileBuf.class, Side.CLIENT, 996);
+		register(MessageGuiSync.class, MessageGuiSync.class, Side.CLIENT, 995);
+		register(MessageGuiSync.class, MessageGuiSync.class, Side.SERVER, 994);
+		register(MessageScroll.class, MessageScroll.class, Side.SERVER, 993);
 		try {
 			channels = ReflectionUtils.getValue(SimpleNetworkWrapper.class, EnumMap.class, INSTANCE);
 		} catch (Exception e) {

@@ -18,12 +18,16 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
+import javax.vecmath.Matrix4f;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.util.vector.Vector3f;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.properties.IProperty;
@@ -64,6 +68,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.model.TRSRTransformation;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -969,5 +974,36 @@ public class TomsUtils {
 	}
 	public static <K, V, R> Function<Entry<K, V>, Pair<K, R>> valueMapper(Function<V, R> func){
 		return e -> Pair.of(e.getKey(), func.apply(e.getValue()));
+	}
+	public static Matrix4f modelRotateMatrix(float x, float y, float z){
+		org.lwjgl.util.vector.Matrix4f matrix4d = new org.lwjgl.util.vector.Matrix4f();
+		org.lwjgl.util.vector.Matrix4f matrix4f = new org.lwjgl.util.vector.Matrix4f();
+		matrix4f.setIdentity();
+		org.lwjgl.util.vector.Matrix4f.rotate((-x) * 0.017453292F, new Vector3f(1.0F, 0.0F, 0.0F), matrix4f, matrix4f);
+		org.lwjgl.util.vector.Matrix4f matrix4f1 = new org.lwjgl.util.vector.Matrix4f();
+		matrix4f1.setIdentity();
+		org.lwjgl.util.vector.Matrix4f.rotate((-y) * 0.017453292F, new Vector3f(0.0F, 1.0F, 0.0F), matrix4f1, matrix4f1);
+		org.lwjgl.util.vector.Matrix4f.mul(matrix4f1, matrix4f, matrix4d);
+		org.lwjgl.util.vector.Matrix4f matrix4f2 = new org.lwjgl.util.vector.Matrix4f();
+		matrix4f2.setIdentity();
+		org.lwjgl.util.vector.Matrix4f.rotate((-z) * 0.017453292F, new Vector3f(0.0F, 0.0F, 1.0F), matrix4f2, matrix4f2);
+		org.lwjgl.util.vector.Matrix4f.mul(matrix4f2, matrix4d, matrix4d);
+
+		Matrix4f ret = new Matrix4f(TRSRTransformation.toVecmath(matrix4d)), tmp = new Matrix4f();
+		tmp.setIdentity();
+		tmp.m03 = tmp.m13 = tmp.m23 = .5f;
+		ret.mul(tmp, ret);
+		tmp.invert();
+		ret.mul(tmp);
+		return ret;
+	}
+	public static <K, V> V getOrPut(Map<K, V> map, K key, Supplier<V> value){
+		if(map.containsKey(key)){
+			return map.get(key);
+		}else{
+			V v = value.get();
+			map.put(key, v);
+			return v;
+		}
 	}
 }

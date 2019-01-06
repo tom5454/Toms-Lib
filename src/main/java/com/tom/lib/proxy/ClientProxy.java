@@ -124,7 +124,7 @@ public class ClientProxy extends CommonProxy {
 						while (!scheduledTasks.isEmpty())
 						{
 							long time = System.currentTimeMillis();
-							if(time - timeS > 10){
+							if(time - timeS > 20){
 								LibInit.log.info("Queued Task handler overloaded! Processed " + pr + " tasks. Skipping " + scheduledTasks.size() + " tasks!");
 								break;
 							}
@@ -379,8 +379,8 @@ public class ClientProxy extends CommonProxy {
 				try {
 					mc.mcProfiler.startSection(packet.getClass().toString());
 					packet.processPacket(getHandler(id));
-					mc.mcProfiler.endSection();
-				} catch(Exception e){}
+				} catch(Exception e){
+				} finally { mc.mcProfiler.endSection(); }
 				return null;
 			}
 		});

@@ -8,7 +8,9 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public interface IGridDevice<G extends IGrid<?, G>> extends IGridAccess<G> {
+import com.tom.lib.api.IValidationChecker;
+
+public interface IGridDevice<G extends IGrid<?, G>> extends IGridAccess<G>, IValidationChecker {
 
 	public static final String GRID_TAG_NAME = "grid";
 	public static final String MASTER_NBT_NAME = "isMaster";
@@ -42,17 +44,18 @@ public interface IGridDevice<G extends IGrid<?, G>> extends IGridAccess<G> {
 
 	void setGrid(G newGrid);
 
-	boolean isValid();
-
 	NBTTagCompound getGridData();
 
 	default List<BlockAccess> next() {
 		List<BlockAccess> ret = new ArrayList<>();
 		for (EnumFacing d : EnumFacing.VALUES) {
-			if (isConnected(d)) {
-				ret.add(new BlockAccess(getPos2().offset(d), d.getOpposite()));
+			if (isConnected(d) && isValidConnection(d)) {
+				ret.add(new BlockAccess(getWorld2(), getPos2().offset(d), d.getOpposite()));
 			}
 		}
 		return ret;
+	}
+	default List<IGridDevice<G>> listSubDevices(){
+		return null;
 	}
 }

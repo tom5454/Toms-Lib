@@ -1,16 +1,9 @@
-package com.tom.api.energy;
+package com.tom.lib.api.energy;
 
-/**
- * An energy storage is the unit of interaction with Energy inventories.<br>
- * This is not to be implemented on TileEntities. This is for internal use only.
- * <p>
- * A reference implementation can be found at {@link EnergyStorage}.
- *
- * @author tom5454
- *
- */
-public interface IEnergyStorage {
+import java.util.List;
 
+/**Used for capabilities.*/
+public interface IEnergyStorageHandlerCapability {
 	/**
 	 * Adds energy to the storage. Returns quantity of energy that was accepted.
 	 *
@@ -21,7 +14,7 @@ public interface IEnergyStorage {
 	 * @return Amount of energy that was (or would have been, if simulated)
 	 *         accepted by the storage.
 	 */
-	double receiveEnergy(double maxReceive, boolean simulate);
+	double receiveEnergy(EnergyType type, double maxReceive, boolean simulate);
 
 	/**
 	 * Removes energy from the storage. Returns quantity of energy that was
@@ -34,28 +27,23 @@ public interface IEnergyStorage {
 	 * @return Amount of energy that was (or would have been, if simulated)
 	 *         extracted from the storage.
 	 */
-	double extractEnergy(double maxExtract, boolean simulate);
+	double extractEnergy(EnergyType type, double maxExtract, boolean simulate);
 
 	/**
-	 * Returns the amount of energy currently stored.
+	 * Returns the amount of energy currently stored in that type.
 	 */
-	double getEnergyStored();
+	double getEnergyStored(EnergyType type);
 
 	/**
-	 * Returns the maximum amount of energy that can be stored.
+	 * Returns the maximum amount of energy that can be stored in that type.
 	 */
-	long getMaxEnergyStored();
+	long getMaxEnergyStored(EnergyType type);
 
-	boolean isFull();
+	/**
+	 *
+	 * @return the valid energy types that can be stored.
+	 */
+	List<EnergyType> getValidEnergyTypes();
 
-	boolean hasEnergy();
-
-	double getMaxExtract();
-
-	double getMaxReceive();
-
-	default boolean isDummy() {
-		return false;
-	}
-
+	boolean canConnectEnergy(EnergyType type);
 }

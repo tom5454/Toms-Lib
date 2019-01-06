@@ -1,15 +1,30 @@
-package com.tom.api.energy;
+package com.tom.lib.api.energy;
 
 import net.minecraft.util.EnumFacing;
 
 /**
- * Implement this interface on Tile Entities which should provide energy,
+ * Implement this interface on Tile Entities which should handle energy,
  * generally storing it in one or more internal {@link IEnergyStorage} objects.
  *
  * @author tom5454
  *
  */
-public interface IEnergyProvider extends IEnergyConnection, IEnergyStorageTile {
+public interface IEnergyHandler extends IEnergyProvider, IEnergyReceiver {
+	/**
+	 * Add energy to an IEnergyReceiver, internal distribution is left entirely
+	 * to the IEnergyReceiver.
+	 *
+	 * @param from
+	 *            Orientation the energy is received from.
+	 * @param maxReceive
+	 *            Maximum amount of energy to receive.
+	 * @param simulate
+	 *            If TRUE, the charge will only be simulated.
+	 * @return Amount of energy that was (or would have been, if simulated)
+	 *         received.
+	 */
+	@Override
+	double receiveEnergy(EnumFacing from, EnergyType type, double maxReceive, boolean simulate);
 
 	/**
 	 * Remove energy from an IEnergyProvider, internal distribution is left
@@ -24,6 +39,7 @@ public interface IEnergyProvider extends IEnergyConnection, IEnergyStorageTile {
 	 * @return Amount of energy that was (or would have been, if simulated)
 	 *         extracted.
 	 */
+	@Override
 	double extractEnergy(EnumFacing from, EnergyType type, double maxExtract, boolean simulate);
 
 	/**
